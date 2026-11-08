@@ -1,0 +1,8 @@
+node_modules
+dist
+.screenshot_profile
+.screenshot_profile2
+.env
+.env.local
+*.log
+.DS_Store
