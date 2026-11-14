@@ -95,6 +95,7 @@ export class InformationPanelController {
       closeRightBtn.addEventListener('click', () => {
         const rightPanel = document.getElementById('right-panel');
         if (rightPanel) rightPanel.classList.add('collapsed');
+        document.getElementById('mobile-backdrop')?.classList.add('hidden');
       });
     }
   }
@@ -203,8 +204,15 @@ export class InformationPanelController {
 
     // Auto open right panel if collapsed
     const rightPanel = document.getElementById('right-panel');
-    if (rightPanel && rightPanel.classList.contains('collapsed')) {
-      rightPanel.classList.remove('collapsed');
+    if (rightPanel) {
+      rightPanel.dataset.userOpened = 'true';
+      if (rightPanel.classList.contains('collapsed')) {
+        rightPanel.classList.remove('collapsed');
+        if (window.innerWidth <= 1024) {
+          document.getElementById('mobile-backdrop')?.classList.remove('hidden');
+          document.getElementById('left-panel')?.classList.add('collapsed');
+        }
+      }
     }
 
     if (!id) {

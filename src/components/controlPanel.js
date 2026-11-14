@@ -61,10 +61,30 @@ export class ControlPanelController {
     this.leftPanel = document.getElementById('left-panel');
     this.rightPanel = document.getElementById('right-panel');
 
+    // Mobile Navigation & Backdrop
+    this.mobileMenuBtn = document.getElementById('btn-mobile-menu');
+    this.closeMobileNavBtn = document.getElementById('btn-close-mobile-nav');
+    this.mobileNavModal = document.getElementById('mobile-nav-modal');
+    this.mobileBackdrop = document.getElementById('mobile-backdrop');
+    this.expandMobileControlsBtn = document.getElementById('btn-expand-mobile-controls');
+    this.bottomControlsBar = document.getElementById('bottom-controls-bar');
+
+    // Mobile Tools Triggers
+    this.mobileTourBtn = document.getElementById('mobile-btn-tour');
+    this.mobileLabelsBtn = document.getElementById('mobile-btn-labels');
+    this.mobileSoundBtn = document.getElementById('mobile-btn-sound');
+    this.mobileResetViewBtn = document.getElementById('mobile-btn-reset-view');
+
     // Telemetry HUD
     this.hudN1Val = document.getElementById('hud-n1-val');
     this.hudN2Val = document.getElementById('hud-n2-val');
     this.hudEgtVal = document.getElementById('hud-egt-val');
+
+    // Auto-collapse side panels on tablet/mobile viewports on load
+    if (window.innerWidth <= 1024) {
+      if (this.leftPanel) this.leftPanel.classList.add('collapsed');
+      if (this.rightPanel) this.rightPanel.classList.add('collapsed');
+    }
   }
 
   bindEvents() {
@@ -131,22 +151,33 @@ export class ControlPanelController {
     });
 
     // 6. Camera View Presets
+    const closeMobileNav = () => {
+      if (this.mobileNavModal) this.mobileNavModal.classList.add('hidden');
+      if (this.mobileBackdrop) this.mobileBackdrop.classList.add('hidden');
+    };
+
     this.viewButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        this.viewButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
         const viewKey = btn.dataset.view;
+        this.viewButtons.forEach(b => {
+          if (b.dataset.view === viewKey) b.classList.add('active');
+          else b.classList.remove('active');
+        });
         this.camera.applyPreset(viewKey, 1000);
+        closeMobileNav();
       });
     });
 
     // 7. Cutaway Mode Buttons
     this.cutawayButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        this.cutawayButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
         const mode = btn.dataset.cutaway;
+        this.cutawayButtons.forEach(b => {
+          if (b.dataset.cutaway === mode) b.classList.add('active');
+          else b.classList.remove('active');
+        });
         this.engine.setCutawayMode(mode);
+        closeMobileNav();
       });
     });
 
@@ -205,14 +236,120 @@ export class ControlPanelController {
     }
 
     // 14. Responsive Collapsible Panels
+    const checkResponsivePanels = () => {
+      if (window.innerWidth <= 1024) {
+        if (this.leftPanel && !this.leftPanel.dataset.userOpened) {
+          this.leftPanel.classList.add('collapsed');
+        }
+        if (this.rightPanel && !this.rightPanel.dataset.userOpened) {
+          this.rightPanel.classList.add('collapsed');
+        }
+      }
+    };
+    window.addEventListener('resize', checkResponsivePanels);
+    checkResponsivePanels();
+
     if (this.toggleLeftBtn && this.leftPanel) {
       this.toggleLeftBtn.addEventListener('click', () => {
-        this.leftPanel.classList.toggle('collapsed');
+        const isCollapsed = this.leftPanel.classList.toggle('collapsed');
+        this.leftPanel.dataset.userOpened = !isCollapsed ? 'true' : '';
+        if (window.innerWidth <= 1024) {
+          if (!isCollapsed) {
+            if (this.mobileBackdrop) this.mobileBackdrop.classList.remove('hidden');
+            if (this.rightPanel) this.rightPanel.classList.add('collapsed');
+            if (this.mobileNavModal) this.mobileNavModal.classList.add('hidden');
+          } else {
+            if (this.mobileBackdrop && (!this.rightPanel || this.rightPanel.classList.contains('collapsed'))) {
+              this.mobileBackdrop.classList.add('hidden');
+            }
+          }
+        }
       });
     }
+
     if (this.toggleRightBtn && this.rightPanel) {
       this.toggleRightBtn.addEventListener('click', () => {
-        this.rightPanel.classList.toggle('collapsed');
+        const isCollapsed = this.rightPanel.classList.toggle('collapsed');
+        this.rightPanel.dataset.userOpened = !isCollapsed ? 'true' : '';
+        if (window.innerWidth <= 1024) {
+          if (!isCollapsed) {
+            if (this.mobileBackdrop) this.mobileBackdrop.classList.remove('hidden');
+            if (this.leftPanel) this.leftPanel.classList.add('collapsed');
+            if (this.mobileNavModal) this.mobileNavModal.classList.add('hidden');
+          } else {
+            if (this.mobileBackdrop && (!this.leftPanel || this.leftPanel.classList.contains('collapsed'))) {
+              this.mobileBackdrop.classList.add('hidden');
+            }
+          }
+        }
+      });
+    }
+
+    // 15. Mobile Navigation & Overflow Drawer
+    const openMobileNav = () => {
+      if (this.mobileNavModal) this.mobileNavModal.classList.remove('hidden');
+      if (this.mobileBackdrop) this.mobileBackdrop.classList.remove('hidden');
+      if (window.innerWidth <= 1024) {
+        if (this.leftPanel) this.leftPanel.classList.add('collapsed');
+        if (this.rightPanel) this.rightPanel.classList.add('collapsed');
+      }
+    };
+
+    if (this.mobileMenuBtn) {
+      this.mobileMenuBtn.addEventListener('click', () => {
+        const isHidden = this.mobileNavModal?.classList.contains('hidden');
+        if (isHidden) openMobileNav();
+        else closeMobileNav();
+      });
+    }
+
+    if (this.closeMobileNavBtn) {
+      this.closeMobileNavBtn.addEventListener('click', closeMobileNav);
+    }
+
+    // 16. Mobile Backdrop Outside Tap
+    if (this.mobileBackdrop) {
+      this.mobileBackdrop.addEventListener('click', () => {
+        closeMobileNav();
+        if (this.leftPanel) this.leftPanel.classList.add('collapsed');
+        if (this.rightPanel) this.rightPanel.classList.add('collapsed');
+        if (this.bottomControlsBar) this.bottomControlsBar.classList.remove('mobile-expanded');
+      });
+    }
+
+    // 17. Mobile Bottom Controls Deck Expander
+    if (this.expandMobileControlsBtn && this.bottomControlsBar) {
+      this.expandMobileControlsBtn.addEventListener('click', () => {
+        this.bottomControlsBar.classList.toggle('mobile-expanded');
+      });
+    }
+
+    // 18. Forward Mobile Tools Actions
+    if (this.mobileTourBtn) {
+      this.mobileTourBtn.addEventListener('click', () => {
+        closeMobileNav();
+        document.getElementById('btn-start-tour')?.click();
+      });
+    }
+
+    if (this.mobileLabelsBtn) {
+      this.mobileLabelsBtn.addEventListener('click', () => {
+        closeMobileNav();
+        this.labelsBtn?.click();
+      });
+    }
+
+    if (this.mobileSoundBtn) {
+      this.mobileSoundBtn.addEventListener('click', () => {
+        closeMobileNav();
+        this.soundBtn?.click();
+      });
+    }
+
+    if (this.mobileResetViewBtn) {
+      this.mobileResetViewBtn.addEventListener('click', () => {
+        closeMobileNav();
+        this.resetViewBtn?.click();
       });
     }
   }
