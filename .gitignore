@@ -1,8 +1,8 @@
 node_modules
 dist
 .screenshot_profile
-.screenshot_profile2
-.env
-.env.local
+.screenshot_profile*
+.*profile*
 *.log
 .DS_Store
+live_*.png
